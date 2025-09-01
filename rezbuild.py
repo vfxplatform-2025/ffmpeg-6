@@ -146,6 +146,56 @@ def build(source_path, build_path, install_path, targets):
         "--enable-gpl",
         "--enable-nonfree",
 
+        # === HDR 입력: 디코더/파서 ===
+        "--enable-decoder=hevc",
+        "--enable-decoder=vp9",
+        "--enable-decoder=av1",
+        "--enable-parser=hevc",
+        "--enable-parser=vp9",
+        "--enable-parser=av1",
+
+        # === 출력 컨테이너(뮤저) ===
+        "--enable-muxer=mp4",
+        "--enable-muxer=matroska",
+        "--enable-muxer=webm",
+
+        # === 인코더(출력 코덱) ===
+        "--enable-encoder=libx265",
+        "--enable-encoder=libaom-av1",
+        "--enable-encoder=libvpx-vp9",
+        # (원하면)
+        "--enable-encoder=libx264",
+
+        # === 필터/색공간/톤매핑 ===
+        "--enable-libzimg",
+        "--enable-filter=zscale",
+        "--enable-filter=tonemap",
+        "--enable-filter=format",
+        "--enable-filter=scale",
+        # (선택) libplacebo 기반:
+        "--enable-libplacebo",
+        "--enable-filter=libplacebo",
+        "--enable-vulkan",
+
+        # === 비트스트림 필터(컨테이너/AnnexB 등) ===
+        "--enable-bsf=hevc_mp4toannexb",
+        "--enable-bsf=h264_mp4toannexb",
+        # (HDR10+ 사용 시)
+        # "--enable-bsf=hdr10plus_metadata",
+
+        # === HW 가속(원하면 VAAPI HDR 디코드) ===
+        "--enable-hwaccel=hevc_vaapi",
+        "--enable-hwaccel=vp9_vaapi",
+        "--enable-hwaccel=av1_vaapi",
+        "--enable-filter=hwupload",
+        "--enable-filter=hwdownload",
+
+        # === 이미지 시퀀스 / EXR 지원 ===
+        "--enable-demuxer=image2",
+        "--enable-muxer=image2",
+        "--enable-decoder=exr",
+        "--enable-encoder=exr",
+
         "--logfile=config.log"
     ]
     try:

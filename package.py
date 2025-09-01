@@ -25,6 +25,7 @@ requires = [
     "libopus-1.4",
     "libvorbis-1.3.7",
     "lame-3.100",
+    "libplacebo-7.351.0",
 ]
 
 tools=[
