@@ -26,6 +26,8 @@ requires = [
     "libvorbis-1.3.7",
     "lame-3.100",
     "libplacebo-7.351.0",
+    "zimg_devel-3.0.6",
+    "libunwind-1.7.2"
 ]
 
 tools=[
@@ -39,7 +41,7 @@ build_command = "python {root}/rezbuild.py {install}"
 
 def commands():
     # 실행 바이너리
-    env.PATH.append("{root}/bin")
+    env.PATH.prepend("{root}/bin")
     # 런타임 라이브러리 로딩 및 RPATH
     env.LD_LIBRARY_PATH.append("{root}/lib")
     env.LD_LIBRARY_PATH.append("/core/Linux/APPZ/packages/libvpx/1.13.1/lib")

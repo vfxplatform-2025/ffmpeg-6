@@ -195,6 +195,11 @@ def build(source_path, build_path, install_path, targets):
         "--enable-muxer=image2",
         "--enable-decoder=exr",
         "--enable-encoder=exr",
+        
+        # ProRes 인코더 추가 (이 부분이 누락되었음)
+        "--enable-encoder=prores",
+        "--enable-encoder=prores_ks", 
+        "--enable-encoder=prores_aw",
 
         "--logfile=config.log"
     ]
