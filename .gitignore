@@ -39,6 +39,7 @@ Makefile
 !CMakeLists.txt
 
 # Build artifacts
+*.pc
 stamp.*
 config.log
 config.status
@@ -66,6 +67,7 @@ rules.ninja
 *_back
 
 # Test files
+test_*
 conftest*
 
 # Node.js

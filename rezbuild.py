@@ -48,7 +48,12 @@ def build(source_path, build_path, install_path, targets):
     # 2) 경로 설정
     tar_path     = os.path.join(source_path, "source", f"ffmpeg-{version}.tar.gz")
     extract_dir  = os.path.join(source_path, "source", f"ffmpeg-{version}")
-    install_root = f"/core/Linux/APPZ/packages/ffmpeg/{version}"
+
+    # variant 서브경로 구성 (imath-3.1.9 or imath-3.2.0)
+    imath_ver = os.environ.get("REZ_IMATH_VERSION", "")
+    variant_subpath = f"imath-{imath_ver}" if imath_ver else ""
+    server_base = f"/core/Linux/APPZ/packages/ffmpeg/{version}"
+    install_root = os.path.join(server_base, variant_subpath) if variant_subpath else server_base
 
     print(f"📦 Tarball:      {tar_path}")
     print(f"📂 Extract dir: {extract_dir}")
@@ -58,7 +63,13 @@ def build(source_path, build_path, install_path, targets):
     clean_build_dir(extract_dir)
     clean_build_dir(build_path)
     if "install" in targets:
-        print(f"🧹 Removing install dir: {install_root}")
+        variant_idx = int(os.environ.get("REZ_BUILD_VARIANT_INDEX", "0"))
+        # 첫 번째 variant 빌드 시 기존 전체 폴더 클린업 (구버전 flat 구조 제거)
+        if variant_idx == 0:
+            print(f"🧹 Removing entire install dir: {server_base}")
+            shutil.rmtree(server_base, ignore_errors=True)
+            os.makedirs(server_base, exist_ok=True)
+        print(f"🧹 Removing variant install dir: {install_root}")
         shutil.rmtree(install_root, ignore_errors=True)
 
     # 4) 소스 압축 해제
@@ -245,11 +256,16 @@ def build(source_path, build_path, install_path, targets):
     if "install" in targets:
         try:
             run_cmd("make install")
-            copy_package_py(source_path, install_root)
+            copy_package_py(source_path, server_base)
             print(f"✅ Installed to {install_root}")
         except subprocess.CalledProcessError:
             print("❌ install failed.")
             sys.exit(1)
+
+    # variant.json 생성 (rez 패키지 등록에 필요)
+    variant_json = os.path.join(build_path, "variant.json")
+    with open(variant_json, "w") as f:
+        f.write("{}\n")
 
     print("✅ FFmpeg build completed.")
 

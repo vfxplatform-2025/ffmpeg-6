@@ -1,14 +1,14 @@
-# ffmpeg 6.1.1 (Major v6)
+# ffmpeg ffmpeg-6.1.1 (Major v6)
 
 VFX Platform 2025 compatible build package for ffmpeg.
 
 ## Package Information
 
 - **Package Name**: ffmpeg
-- **Version**: 6.1.1
+- **Version**: ffmpeg-6.1.1
 - **Major Version**: 6
 - **Repository**: vfxplatform-2025/ffmpeg-6
-- **Description**: FFmpeg build for QtMultimedia & QtWebEngine compatibility
+- **Description**: VFX Platform 2025 build package
 
 ## Build Instructions
 
@@ -20,7 +20,7 @@ rez-build -i
 
 ```
 ffmpeg/
-├── 6.1.1/
+├── ffmpeg-6.1.1/
 │   ├── package.py      # Rez package configuration
 │   ├── rezbuild.py     # Build script
 │   ├── get_source.sh   # Source download script (if applicable)
@@ -29,7 +29,7 @@ ffmpeg/
 
 ## Installation
 
-When built with `install` target, installs to: `/core/Linux/APPZ/packages/ffmpeg/6.1.1`
+When built with `install` target, installs to: `/core/Linux/APPZ/packages/ffmpeg/ffmpeg-6.1.1`
 
 ## Version Strategy
 

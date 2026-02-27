@@ -33,7 +33,6 @@ requires = [
     "libunwind-1.7.2",
     "libass-0.17.1",
     "openexr-3.3.3",
-    "imath-3.2.0"
 ]
 
 tools=[
@@ -41,7 +40,10 @@ tools=[
 'ffprobe'
 ]
 
-variants = []
+variants = [
+    ["imath-3.1.9"],
+    ["imath-3.2.0"],
+]
 
 build_command = "python {root}/rezbuild.py {install}"
 
