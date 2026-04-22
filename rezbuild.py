@@ -55,11 +55,17 @@ def build(source_path, build_path, install_path, targets):
     server_base = f"/core/Linux/APPZ/packages/ffmpeg/{version}"
     install_root = os.path.join(server_base, variant_subpath) if variant_subpath else server_base
 
+    # 3) 의존성 경로 (REZ_*_ROOT 환경변수 활용)
+    openssl_root = os.environ.get("REZ_OPENSSL_ROOT", "/core/Linux/APPZ/packages/openssl/3.0.16")
+    libass_root  = os.environ.get("REZ_LIBASS_ROOT", "/core/Linux/APPZ/packages/libass/0.17.1")
+
     print(f"📦 Tarball:      {tar_path}")
     print(f"📂 Extract dir: {extract_dir}")
     print(f"📁 Install dir: {install_root}")
+    print(f"🔗 OpenSSL:     {openssl_root}")
+    print(f"🔗 libass:      {libass_root}")
 
-    # 3) 클린업
+    # 4) 클린업
     clean_build_dir(extract_dir)
     clean_build_dir(build_path)
     if "install" in targets:
@@ -72,23 +78,34 @@ def build(source_path, build_path, install_path, targets):
         print(f"🧹 Removing variant install dir: {install_root}")
         shutil.rmtree(install_root, ignore_errors=True)
 
-    # 4) 소스 압축 해제
+    # 5) 소스 압축 해제
     if not os.path.exists(tar_path):
         print(f"❌ tar.gz not found: {tar_path}")
         sys.exit(1)
     run_cmd(f"tar -xvf {tar_path}", cwd=os.path.dirname(tar_path))
 
-    # 5) configure
+    # 6) extra-cflags / extra-ldflags 통합 (마지막 값만 적용되므로 하나로 합침)
+    extra_cflags = " ".join([
+        f"-I{openssl_root}/include",
+        f"-I{libass_root}/include",
+    ])
+    extra_ldflags = " ".join([
+        f"-L{openssl_root}/lib",
+        f"-L{libass_root}/lib",
+    ])
+
+    # 7) configure
     os.chdir(extract_dir)
     config_cmd = [
-                "./configure",
+        "./configure",
         f"--prefix={install_root}",
-        "--enable-ffmpeg",  # ffmpeg 실행 파일 생성
-        "--enable-ffprobe",  # ffprobe 실행 파일 생성
-        "--disable-ffplay",  # ffplay 불필요시 비활성화
+
+        # 실행 파일
+        "--enable-ffmpeg",
+        "--enable-ffprobe",
+        "--disable-ffplay",
         "--disable-doc",
         "--disable-debug",
-        #"--disable-everything",  # 필요한 것만 enable
 
         # 기본 라이브러리
         "--enable-avcodec",
@@ -99,146 +116,122 @@ def build(source_path, build_path, install_path, targets):
 
         # 디코더
         "--enable-decoder=h264",
-        "--enable-decoder=aac",
+        "--enable-decoder=hevc",
         "--enable-decoder=vp8",
+        "--enable-decoder=vp9",
+        "--enable-decoder=av1",
+        "--enable-decoder=aac",
         "--enable-decoder=mp3",
+        "--enable-decoder=exr",
+        "--enable-decoder=png",
+        "--enable-decoder=tiff",
+        "--enable-decoder=webp",
+        "--enable-decoder=rawvideo",
+
+        # 파서
+        "--enable-parser=h264",
+        "--enable-parser=hevc",
+        "--enable-parser=vp8",
+        "--enable-parser=vp9",
+        "--enable-parser=av1",
+        "--enable-parser=aac",
 
         # demuxer
         "--enable-demuxer=mov",
-        "--enable-demuxer=matroska",  # webm 포함
+        "--enable-demuxer=matroska",
         "--enable-demuxer=ogg",
+        "--enable-demuxer=image2",
+        "--enable-demuxer=image2pipe",
+        "--enable-demuxer=rawvideo",
 
-        # parser
-        "--enable-parser=h264",
-        "--enable-parser=aac",
-        "--enable-parser=vp8",
+        # muxer
+        "--enable-muxer=mp4",
+        "--enable-muxer=matroska",
+        "--enable-muxer=webm",
+        "--enable-muxer=image2",
+        "--enable-muxer=image2pipe",
 
-        # protocol & bsf
+        # 인코더
+        "--enable-encoder=libx264",
+        "--enable-encoder=libx265",
+        "--enable-encoder=libaom-av1",
+        "--enable-encoder=libvpx-vp9",
+        "--enable-encoder=exr",
+        "--enable-encoder=prores",
+        "--enable-encoder=prores_ks",
+        "--enable-encoder=prores_aw",
+
+        # 프로토콜
         "--enable-protocol=file",
-        "--enable-bsf=aac_adtstoasc",
-
+        "--enable-protocol=pipe",
         "--enable-protocol=https",
         "--enable-protocol=http",
         "--enable-protocol=tls",
         "--enable-protocol=tcp",
         "--enable-protocol=udp",
 
+        # 비트스트림 필터
+        "--enable-bsf=aac_adtstoasc",
+        "--enable-bsf=hevc_mp4toannexb",
+        "--enable-bsf=h264_mp4toannexb",
+
         # 외부 라이브러리
-        "--enable-libopus",
-        "--enable-libvorbis",
-        "--enable-libmp3lame",
-
         "--enable-openssl",
-        f"--extra-cflags=-I/core/Linux/APPZ/packages/openssl/3.0.16/include",
-        f"--extra-ldflags=-L/core/Linux/APPZ/packages/openssl/3.0.16/lib",
-
-        # 기타
-        "--enable-pic",
-        "--enable-shared",
-        "--disable-static",
-
-        # 추가
         "--enable-libx264",
         "--enable-libx265",
         "--enable-libvpx",
         "--enable-libfdk-aac",
+        "--enable-libopus",
         "--enable-libvorbis",
         "--enable-libmp3lame",
+        "--enable-libaom",
+        "--enable-libdav1d",
+        "--enable-libvmaf",
+        "--enable-libxvid",
         "--enable-libdrm",
+        "--enable-libfreetype",
+        "--enable-libharfbuzz",
+        "--enable-libass",
+        "--enable-libzimg",
+        "--enable-libplacebo",
+
+        # 필터
+        "--enable-filter=drawtext",
+        "--enable-filter=ass",
+        "--enable-filter=subtitles",
+        "--enable-filter=zscale",
+        "--enable-filter=tonemap",
+        "--enable-filter=format",
+        "--enable-filter=scale",
+        "--enable-filter=libplacebo",
+        "--enable-filter=hwupload",
+        "--enable-filter=hwdownload",
+
+        # HW 가속
         "--enable-vaapi",
         "--enable-libxcb",
         "--enable-libxcb-shm",
         "--enable-libxcb-xfixes",
         "--enable-libxcb-shape",
-        "--enable-libaom",
-        "--enable-libdav1d",
-        "--enable-libvmaf",
-        "--enable-libxvid",
-        "--enable-gpl",
-        "--enable-nonfree",
-
-        "--enable-libfreetype",
-        "--enable-libharfbuzz",          # 권장(한글 커닝/조합 품질)
-        "--enable-filter=drawtext",
-        "--enable-libass",
-        "--enable-filter=ass",
-        "--enable-filter=subtitles",
-        f"--extra-cflags=-I/core/Linux/APPZ/packages/libass/0.17.2/include",
-        f"--extra-ldflags=-L/core/Linux/APPZ/packages/libass/0.17.2/lib",
-        
-        "--enable-demuxer=image2",
-        "--enable-muxer=image2",
-        "--enable-demuxer=image2pipe",
-        "--enable-muxer=image2pipe",
-        "--enable-decoder=exr",
-        "--enable-encoder=exr",
-        "--enable-decoder=png",
-        "--enable-decoder=tiff",
-        "--enable-decoder=webp",
-        "--enable-protocol=pipe",
-
-        # === HDR 입력: 디코더/파서 ===
-        "--enable-decoder=hevc",
-        "--enable-decoder=vp9",
-        "--enable-decoder=av1",
-        "--enable-parser=hevc",
-        "--enable-parser=vp9",
-        "--enable-parser=av1",
-        
-        #rawvideo
-        "--enable-demuxer=rawvideo",
-        "--enable-decoder=rawvideo",
-        
-        # === 출력 컨테이너(뮤저) ===
-        "--enable-muxer=mp4",
-        "--enable-muxer=matroska",
-        "--enable-muxer=webm",
-
-        # === 인코더(출력 코덱) ===
-        "--enable-encoder=libx265",
-        "--enable-encoder=libaom-av1",
-        "--enable-encoder=libvpx-vp9",
-        # (원하면)
-        "--enable-encoder=libx264",
-
-        # === 필터/색공간/톤매핑 ===
-        "--enable-libzimg",
-        "--enable-filter=zscale",
-        "--enable-filter=tonemap",
-        "--enable-filter=format",
-        "--enable-filter=scale",
-        # (선택) libplacebo 기반:
-        "--enable-libplacebo",
-        "--enable-filter=libplacebo",
-        #"--enable-vulkan",
-        "--disable-vulkan",
-        
-
-        # === 비트스트림 필터(컨테이너/AnnexB 등) ===
-        "--enable-bsf=hevc_mp4toannexb",
-        "--enable-bsf=h264_mp4toannexb",
-        # (HDR10+ 사용 시)
-        # "--enable-bsf=hdr10plus_metadata",
-
-        # === HW 가속(원하면 VAAPI HDR 디코드) ===
         "--enable-hwaccel=hevc_vaapi",
         "--enable-hwaccel=vp9_vaapi",
         "--enable-hwaccel=av1_vaapi",
-        "--enable-filter=hwupload",
-        "--enable-filter=hwdownload",
 
-        # === 이미지 시퀀스 / EXR 지원 ===
-        "--enable-demuxer=image2",
-        "--enable-muxer=image2",
-        "--enable-decoder=exr",
-        "--enable-encoder=exr",
-        
-        # ProRes 인코더 추가 (이 부분이 누락되었음)
-        "--enable-encoder=prores",
-        "--enable-encoder=prores_ks", 
-        "--enable-encoder=prores_aw",
+        # 라이센스
+        "--enable-gpl",
+        "--enable-nonfree",
 
-        "--logfile=config.log"
+        # 빌드 옵션
+        "--enable-pic",
+        "--enable-shared",
+        "--disable-static",
+        "--disable-vulkan",
+
+        # 통합 플래그 (각각 한 번만 지정)
+        f"--extra-cflags={extra_cflags}",
+        f"--extra-ldflags={extra_ldflags}",
+
+        "--logfile=config.log",
     ]
     try:
         subprocess.run(config_cmd, check=True)
@@ -246,7 +239,7 @@ def build(source_path, build_path, install_path, targets):
         print("❌ configure failed. config.log 확인하세요.")
         sys.exit(1)
 
-    # 6) make & install
+    # 8) make & install
     try:
         run_cmd("make -j$(nproc)")
     except subprocess.CalledProcessError:

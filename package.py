@@ -52,7 +52,7 @@ def commands():
     env.PATH.prepend("{root}/bin")
     # 런타임 라이브러리 로딩 및 RPATH
     env.LD_LIBRARY_PATH.append("{root}/lib")
-    env.LD_LIBRARY_PATH.append("/core/Linux/APPZ/packages/libvpx/1.13.1/lib")
+    env.LD_LIBRARY_PATH.append("{REZ_LIBVPX_ROOT}/lib")
     # pkg-config 검색 경로 (lib 및 lib64)
     env.PKG_CONFIG_PATH.append("{root}/lib/pkgconfig")
     # FFmpeg root
